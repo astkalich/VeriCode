@@ -1,0 +1,1592 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VeriCode — Кабинет учителя</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logout-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .main-container {
+            display: flex;
+            height: calc(100vh - 60px);
+        }
+
+        .sidebar {
+            width: 250px;
+            background: white;
+            border-right: 1px solid #ddd;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 1rem;
+            background: #ecf0f1;
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+            height: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .create-group-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+
+        .create-group-btn:hover {
+            background-color: #2980b9;
+        }
+
+        .group-list {
+            padding: 0;
+        }
+
+        .group-item {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .group-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .group-item.active {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .group-name {
+            font-weight: bold;
+            margin-bottom: 0.3rem;
+        }
+
+        .group-description {
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .group-item.active .group-description {
+            color: #ecf0f1;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .content-header {
+            padding: 1rem;
+            background: white;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .create-assignment-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .create-assignment-btn:hover {
+            background-color: #2ecc71;
+        }
+
+        .content-main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #666;
+            margin-top: 2rem;
+        }
+
+        .pending-requests {
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .section-header {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .students-table {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .grade-cell {
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .grade-input {
+            width: 60px;
+            padding: 0.25rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .assignment-clickable {
+            cursor: pointer;
+            color: #3498db;
+            text-decoration: underline;
+        }
+
+        .assignment-clickable:hover {
+            color: #2980b9;
+        }
+
+        .solutions-section {
+            margin-top: 1rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .solution-item {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .solution-item.ungraded {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+
+        .solution-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .solution-code {
+            background: #2c3e50;
+            color: white;
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            margin: 1rem 0;
+        }
+
+        .analysis-results {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+
+        .grading-form {
+            background: #e8f5e8;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+
+        .grading-form input, .grading-form textarea {
+            width: 100%;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .grade-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .approve-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+
+        .reject-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            margin-left: 0.5rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: black;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .delete-group-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .delete-group-btn:hover {
+            background: #c82333;
+        }
+
+        .remove-member-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+            font-size: 12px;
+        }
+
+        .remove-member-btn:hover {
+            background: #c82333;
+        }
+
+        .member-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>VeriCode — Кабинет учителя</h1>
+        <div class="user-info">
+            <span id="username" style="cursor: pointer;" onclick="openProfileModal()"></span>
+            <span id="userRole" style="margin-left: 0.5rem; color: #ecf0f1; font-size: 0.9em;"></span>
+            <button class="logout-btn" onclick="logout()">Выход</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                Мои группы
+                <button class="create-group-btn" onclick="openCreateGroupModal()">Создать</button>
+            </div>
+            <div id="groupsList" class="group-list">
+                <!-- Группы будут загружены здесь -->
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div class="content-header">
+                <h2 id="selectedGroupName">Выберите группу</h2>
+                <button class="create-assignment-btn" onclick="openEditGroupModal()" style="display: none;" id="editGroupBtn">
+                    Изменить название
+                </button>
+            </div>
+
+            <div class="content-main" id="contentMain">
+                <div class="empty-state">
+                    Выберите группу из списка слева для просмотра учеников и управления заданиями
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для редактирования профиля -->
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeProfileModal()">&times;</span>
+            <h2>Редактирование профиля</h2>
+            <form id="profileForm">
+                <div class="form-group">
+                    <label for="firstName">Имя:</label>
+                    <input type="text" id="firstName" required>
+                </div>
+                
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label for="lastName">Фамилия:</label>
+                    <input type="text" id="lastName" required>
+                </div>
+                
+                <div style="margin: 2rem 0 1rem 0; padding-top: 1.5rem; border-top: 1px solid #ddd;">
+                    <button type="button" id="changePasswordBtn" class="create-assignment-btn" onclick="togglePasswordChange()" style="background: #f39c12;">
+                        Сменить пароль
+                    </button>
+                </div>
+                
+                <div id="passwordFields" style="display: none; margin-top: 1rem;">
+                    <div class="form-group">
+                        <label for="currentPassword">Текущий пароль:</label>
+                        <input type="password" id="currentPassword" placeholder="Введите текущий пароль">
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">Новый пароль:</label>
+                        <input type="password" id="newPassword" placeholder="Введите новый пароль">
+                    </div>
+                </div>
+                
+                <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ddd;">
+                    <button type="submit" class="create-assignment-btn">Сохранить изменения</button>
+                    <button type="button" class="logout-btn" onclick="closeProfileModal()" style="margin-left: 1rem;">Отмена</button>
+                </div>
+                
+                <div id="profileMessage" style="margin-top: 1rem; padding: 0.5rem; border-radius: 4px; text-align: center;"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно для создания задания -->
+    <div id="assignmentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCreateAssignmentModal()">&times;</span>
+            <h2 style="margin-bottom: 2rem;">Создать новое задание</h2>
+            <form id="assignmentForm">
+                <div class="form-group">
+                    <label for="assignmentTitle">Название задания:</label>
+                    <input type="text" id="assignmentTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="assignmentDescription">Описание задания:</label>
+                    <textarea id="assignmentDescription" rows="4" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="assignmentTests">Тесты:</label>
+                    <textarea id="assignmentTests" rows="6" placeholder="Примеры:&#10;14 24 144 22 12 0 -> 168&#10;6 54 84 0 -> 54&#10;пусто -> Hello World"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="assignmentDeadline">Дедлайн (необязательно):</label>
+                    <input type="datetime-local" id="assignmentDeadline">
+                </div>
+                <button type="submit" class="create-assignment-btn">Создать задание</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно для создания группы -->
+    <div id="groupModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCreateGroupModal()">&times;</span>
+            <h2>Создать новую группу</h2>
+            <form id="groupForm">
+                <div class="form-group">
+                    <label for="groupName">Название группы:</label>
+                    <input type="text" id="groupName" required>
+                </div>
+                <div class="form-group">
+                    <label for="groupDescription">Описание группы:</label>
+                    <textarea id="groupDescription" rows="3" placeholder="Описание группы (необязательно)"></textarea>
+                </div>
+                <button type="submit" class="create-assignment-btn">Создать группу</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentGroupId = null;
+        let groupAssignments = {};
+        let groupMembers = {};
+        let pendingRequests = {};
+
+        // Функции для перевода отчетов на русский язык
+        function translateStyleReport(styleReport) {
+            if (!styleReport || styleReport === 'Не анализировался') return styleReport;
+            
+            // Извлекаем номер строки и позицию из исходного отчета
+            const lineMatch = styleReport.match(/(\d+):(\d+):/);
+            let lineInfo = '';
+            if (lineMatch) {
+                lineInfo = `Строка ${lineMatch[1]}, позиция ${lineMatch[2]}: `;
+            }
+            
+            let translated = styleReport
+                // Убираем путь к файлу до номера строки
+                .replace(/\/tmp\/[^\s]*\.py:\d+:\d+:\s*/g, '')
+                .replace(/line (\d+)/g, 'строка $1')
+                .replace(/column (\d+)/g, 'столбец $1')
+                .replace(/E\d+:/g, '')  // Убираем коды ошибок типа E302:
+                .replace(/W\d+:/g, '')  // Убираем коды предупреждений типа W291:
+                .replace(/C\d+:/g, '')  // Убираем коды конвенций типа C0103:
+                .replace(/R\d+:/g, '')  // Убираем коды рефакторинга типа R1705:
+                .replace(/^[A-Z]\d+\s*/, '') // Убираем коды в начале строки
+                .replace(/missing whitespace around operator/g, 'отсутствуют пробелы вокруг оператора')
+                .replace(/too many blank lines/g, 'слишком много пустых строк')
+                .replace(/trailing whitespace/g, 'лишние пробелы в конце строки')
+                .replace(/line too long/g, 'строка слишком длинная')
+                .replace(/expected 2 blank lines/g, 'ожидается 2 пустые строки')
+                .replace(/blank line at end of file/g, 'пустая строка в конце файла')
+                .replace(/no newline at end of file/g, 'отсутствует новая строка в конце файла')
+                .replace(/indentation is not a multiple of four/g, 'отступ не кратен четырем')
+                .replace(/undefined name/g, 'неопределенное имя')
+                .replace(/imported but unused/g, 'импортировано, но не используется')
+                .replace(/redefinition of unused/g, 'переопределение неиспользуемого')
+                .replace(/comparison to None should be/g, 'сравнение с None должно быть')
+                .replace(/missing docstring/g, 'отсутствует документация')
+                .replace(/invalid name/g, 'неправильное имя')
+                .replace(/unused variable/g, 'неиспользуемая переменная')
+                .replace(/unused import/g, 'неиспользуемый импорт');
+            
+            return lineInfo + translated.trim();
+        }
+
+        function translateErrorReport(errorReport) {
+            if (!errorReport || errorReport === 'Не найдены' || errorReport === 'Нет') return errorReport;
+            
+            let translated = errorReport
+                .replace(/line (\d+)/g, 'строка $1')
+                .replace(/File ".*?", /g, '') // Убираем путь к файлу
+                .replace(/SyntaxError:/g, 'Синтаксическая ошибка:')
+                .replace(/NameError:/g, 'Ошибка имени:')
+                .replace(/TypeError:/g, 'Ошибка типа:')
+                .replace(/ValueError:/g, 'Ошибка значения:')
+                .replace(/IndentationError:/g, 'Ошибка отступа:')
+                .replace(/KeyError:/g, 'Ошибка ключа:')
+                .replace(/AttributeError:/g, 'Ошибка атрибута:')
+                .replace(/IndexError:/g, 'Ошибка индекса:')
+                .replace(/ZeroDivisionError:/g, 'Деление на ноль:')
+                .replace(/invalid syntax/g, 'неправильный синтаксис')
+                .replace(/unexpected EOF while parsing/g, 'неожиданный конец файла')
+                .replace(/name '(.+?)' is not defined/g, "имя '$1' не определено")
+                .replace(/unindent does not match any outer indentation level/g, 'отступ не соответствует внешнему уровню')
+                .replace(/expected an indented block/g, 'ожидается блок с отступом')
+                .replace(/object has no attribute/g, 'объект не имеет атрибута')
+                .replace(/list index out of range/g, 'индекс списка вне диапазона')
+                .replace(/division by zero/g, 'деление на ноль')
+                .replace(/unsupported operand type/g, 'неподдерживаемый тип операнда');
+            
+            return translated.trim();
+        }
+
+        function getStyleIcon(styleReport) {
+            if (!styleReport || styleReport === 'Не анализировался') return '⚪';
+            if (styleReport.includes('W292') || styleReport.includes('E') || styleReport.includes('W') || styleReport.includes('C') || styleReport.includes('R')) {
+                return '❗';
+            }
+            return '✅';
+        }
+
+        function getErrorIcon(errorReport) {
+            if (!errorReport || errorReport === 'Не найдены' || errorReport === 'Нет') return '✅';
+            return '❌';
+        }
+
+        function getTestIcon(testsPassed, totalTests) {
+            if (testsPassed === undefined || totalTests === undefined) return '⚪';
+            if (testsPassed === totalTests) return '✅';
+            return '❌';
+        }
+
+        async function checkAuth() {
+            try {
+                const response = await fetch("/api/current-user");
+                if (response.ok) {
+                    const user = await response.json();
+                    document.getElementById("username").textContent = `${user.last_name} ${user.first_name}`;
+                    const roleText = user.role === "teacher" ? "Учитель" : user.role === "admin" ? "Администратор" : "Ученик";
+                    document.getElementById("userRole").textContent = `(${roleText})`;
+                    if (user.role !== "teacher") {
+                        window.location.href = "/dashboard";
+                    }
+                } else {
+                    window.location.href = "/login";
+                }
+            } catch (error) {
+                window.location.href = "/login";
+            }
+        }
+
+        function logout() {
+            fetch('/api/logout', {
+                method: 'POST'
+            }).then(() => {
+                window.location.href = '/login';
+            });
+        }
+
+        async function loadGroups() {
+            console.log('Начинаем загрузку групп...');
+            try {
+                const response = await fetch("/api/groups");
+                console.log('Ответ сервера:', response.status, response.statusText);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Получены данные групп:', data);
+                
+                const container = document.getElementById("groupsList");
+                if (!container) {
+                    console.error('Элемент groupsList не найден');
+                    return;
+                }
+
+                container.innerHTML = "";
+
+                if (!data.groups || data.groups.length === 0) {
+                    console.log('Нет групп для отображения');
+                    container.innerHTML = '<div style="padding: 1rem; text-align: center; color: #666;">Нет групп</div>';
+                    return;
+                }
+
+                console.log(`Отображаем ${data.groups.length} групп`);
+                data.groups.forEach((group, index) => {
+                    console.log(`Обрабатываем группу ${index + 1}:`, group);
+                    const item = document.createElement("div");
+                    item.className = "group-item";
+                    item.setAttribute('data-group-id', group.id);
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        selectGroup(group.id, group.name);
+                    });
+                    item.innerHTML = `
+                        <div class="group-name">${escapeHtml(group.name || 'Без названия')}</div>
+                        <div class="group-description">${escapeHtml(group.description || 'Без описания')}</div>
+                    `;
+                    container.appendChild(item);
+                });
+                console.log('Группы успешно загружены и отображены');
+            } catch (error) {
+                console.error('Ошибка загрузки групп:', error);
+                const container = document.getElementById("groupsList");
+                if (container) {
+                    container.innerHTML = `
+                        <div style="padding: 1rem; text-align: center; color: #e74c3c;">
+                            <p>Ошибка загрузки групп: ${error.message}</p>
+                            <button onclick="loadGroups()" style="margin-top: 10px; padding: 8px 16px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                Попробовать снова
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // Функция для экранирования HTML
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function selectGroup(groupId, groupName) {
+            console.log(`Выбираем группу: ID=${groupId}, Name=${groupName}`);
+            
+            try {
+                // Убираем активный класс со всех групп
+                document.querySelectorAll('.group-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+
+                // Добавляем активный класс к выбранной группе
+                const selectedItem = document.querySelector(`.group-item[data-group-id="${groupId}"]`);
+                if (selectedItem) {
+                    selectedItem.classList.add('active');
+                }
+
+                currentGroupId = groupId;
+                
+                // Безопасно обновляем название группы
+                const selectedGroupName = document.getElementById("selectedGroupName");
+                if (selectedGroupName) {
+                    selectedGroupName.textContent = groupName || 'Группа без названия';
+                }
+                
+                const editBtn = document.getElementById("editGroupBtn");
+                if (editBtn) {
+                    editBtn.style.display = "block";
+                }
+
+                await loadGroupData(groupId);
+            } catch (error) {
+                console.error('Ошибка при выборе группы:', error);
+                alert('Ошибка при выборе группы. Попробуйте обновить страницу.');
+            }
+        }
+
+        async function loadGroupData(groupId) {
+            try {
+                // Загружаем участников группы
+                const membersResponse = await fetch(`/api/groups/${groupId}/members`);
+                const membersData = await membersResponse.json();
+                groupMembers[groupId] = membersData.members;
+
+                // Загружаем заявки на вступление в группу
+                const requestsResponse = await fetch(`/api/groups/${groupId}/join-requests`);
+                const requestsData = await requestsResponse.json();
+                pendingRequests[groupId] = requestsData.requests;
+
+                // Загружаем задания группы
+                const assignmentsResponse = await fetch("/api/assignments");
+                const assignmentsData = await assignmentsResponse.json();
+                groupAssignments[groupId] = assignmentsData.assignments.filter(a => a.group_id == groupId);
+
+                displayGroupContent();
+            } catch (error) {
+                console.error('Ошибка загрузки данных группы:', error);
+            }
+        }
+
+        function displayGroupContent() {
+            const contentMain = document.getElementById("contentMain");
+            const members = groupMembers[currentGroupId] || [];
+            const assignments = groupAssignments[currentGroupId] || [];
+            const pending = pendingRequests[currentGroupId] || [];
+
+            let html = '';
+
+            // Заявки на вступление
+            if (pending.length > 0) {
+                html += `
+                    <div class="pending-requests">
+                        <div class="section-header">Заявки на вступление в группу</div>
+                        <div style="padding: 1rem;">
+                `;
+
+                pending.forEach(request => {
+                    html += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+                            <div>
+                                <span><strong>${request.full_name}</strong></span>
+                                <small style="display: block; color: #666;">Логин: ${request.username}</small>
+                                <small style="display: block; color: #666;">Заявка от: ${new Date(request.created_at).toLocaleString()}</small>
+                            </div>
+                            <div>
+                                <button class="approve-btn" onclick="approveStudent(${request.id})">Принять</button>
+                                <button class="reject-btn" onclick="rejectStudent(${request.id})">Отклонить</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Кнопка создания задания
+            html += `
+                <div style="margin-bottom: 1rem;">
+                    <button class="create-assignment-btn" onclick="openCreateAssignmentModal()">
+                        Создать задание
+                    </button>
+                </div>
+            `;
+
+            // Таблица успеваемости
+            if (members.length > 0) {
+                html += `
+                    <div class="students-table">
+                        <div class="section-header">Успеваемость студентов</div>
+                        <table style="border-collapse: separate; border-spacing: 0;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #ddd; padding: 0.75rem;">Студент</th>
+                `;
+
+                assignments.forEach(assignment => {
+                    html += `<th style="border: 1px solid #ddd; padding: 0.75rem; text-align: center; cursor: pointer;" onclick="scrollToAssignmentInList(${assignment.id})">${assignment.title}</th>`;
+                });
+
+                html += `
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                members.forEach(member => {
+                    html += `
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 0.75rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <strong>${member.full_name}</strong>
+                                    <button class="remove-member-btn" onclick="removeMemberFromGroup(${member.id}, '${member.full_name}')" title="Удалить из группы">
+                                        ×
+                                    </button>
+                                </div>
+                            </td>
+                    `;
+
+                    assignments.forEach(assignment => {
+                        html += `<td style="border: 1px solid #ddd; padding: 0.75rem; text-align: center;" id="grade_${member.id}_${assignment.id}">-</td>`;
+                    });
+
+                    html += `</tr>`;
+                });
+
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="students-table">
+                        <div class="section-header">Студенты</div>
+                        <div style="padding: 1rem; text-align: center; color: #666;">
+                            В группе пока нет студентов
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Список заданий группы
+            html += `
+                <div class="assignments-section" style="margin-top: 2rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <div class="section-header">Задания группы</div>
+            `;
+
+            if (assignments.length === 0) {
+                html += `
+                    <div style="padding: 1rem; text-align: center; color: #666;">
+                        В группе пока нет заданий
+                    </div>
+                `;
+            } else {
+                assignments.forEach(assignment => {
+                    const createdDate = new Date(assignment.created_at || Date.now()).toLocaleDateString();
+                    let deadlineText = '';
+                    if (assignment.deadline) {
+                        const deadline = new Date(assignment.deadline);
+                        const now = new Date();
+                        const isExpired = now > deadline;
+                        deadlineText = `<small style="color: ${isExpired ? '#e74c3c' : '#666'};">Дедлайн: ${deadline.toLocaleString()}${isExpired ? ' (истек)' : ''}</small>`;
+                    }
+                    html += `
+                        <div class="assignment-card" style="border-bottom: 1px solid #eee; padding: 1rem;" id="assignment_card_${assignment.id}">
+                            <div class="assignment-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="toggleAssignmentDetails(${assignment.id})">
+                                <div>
+                                    <h4 style="margin: 0;">${assignment.title}</h4>
+                                    <div>
+                                        <small style="color: #666;">Создано: ${createdDate}</small>
+                                        ${deadlineText ? `<br>${deadlineText}` : ''}
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    <button class="approve-btn" onclick="toggleSolutionsList(${assignment.id}, '${assignment.title}'); event.stopPropagation();" style="background: #3498db;">
+                                        Решения учеников
+                                    </button>
+                                    <button class="expand-btn" id="expand_${assignment.id}" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">▼</button>
+                                </div>
+                            </div>
+                            <div id="details_${assignment.id}" class="assignment-details" style="display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                                <p><strong>Описание:</strong></p>
+                                <pre style="background: #f8f9fa; padding: 0.5rem; border-radius: 4px; white-space: pre-wrap; margin: 0.5rem 0 1.5rem 0;">${assignment.description || 'Без описания'}</pre>
+                                <p><strong>Тесты:</strong></p>
+                                <pre style="background: #f8f9fa; padding: 0.5rem; border-radius: 4px; white-space: pre-wrap; margin: 0.5rem 0;">${assignment.tests || 'Тесты не указаны'}</pre>
+                                <div style="margin-top: 1rem;">
+                                    <button class="approve-btn" onclick="editAssignment(${assignment.id})">Редактировать</button>
+                                    <button class="reject-btn" onclick="deleteAssignment(${assignment.id})" style="margin-left: 0.5rem;">Удалить</button>
+                                </div>
+                            </div>
+                            <div id="solutions_${assignment.id}" class="solutions-list" style="display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                                <!-- Решения будут загружены здесь -->
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            html += `</div>`;
+
+            // Кнопка удаления группы
+            html += `
+                <div style="margin-top: 3rem; text-align: center; padding: 2rem; border-top: 2px solid #eee;">
+                    <button class="delete-group-btn" onclick="deleteCurrentGroup()" style="background: #dc3545; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                        Удалить группу
+                    </button>
+                </div>
+            `;
+
+            contentMain.innerHTML = html;
+
+            // Загружаем оценки
+            loadGrades();
+        }
+
+        async function loadGrades() {
+            const members = groupMembers[currentGroupId] || [];
+            const assignments = groupAssignments[currentGroupId] || [];
+
+            for (const member of members) {
+                for (const assignment of assignments) {
+                    try {
+                        const response = await fetch(`/api/solutions/${assignment.id}`);
+                        const data = await response.json();
+                        const solution = data.solutions.find(s => s.username === member.username);
+
+                        const gradeCell = document.getElementById(`grade_${member.id}_${assignment.id}`);
+                        if (solution) {
+                            if (solution.teacher_grade) {
+                                gradeCell.textContent = solution.teacher_grade;
+                                gradeCell.style.backgroundColor = '#d4edda';
+                            } else {
+                                gradeCell.textContent = 'Не оценено';
+                                gradeCell.style.backgroundColor = '#fff3cd';
+                            }
+                        } else {
+                            gradeCell.textContent = '-';
+                        }
+                    } catch (error) {
+                        console.error('Ошибка загрузки оценки:', error);
+                    }
+                }
+            }
+        }
+
+        async function toggleSolutionsList(assignmentId, assignmentTitle) {
+            console.log(`Переключаем показ решений для задания ${assignmentId}`);
+            const targetSolutionsDiv = document.getElementById(`solutions_${assignmentId}`);
+            
+            if (!targetSolutionsDiv) {
+                console.error(`Не найден элемент solutions_${assignmentId}`);
+                return;
+            }
+            
+            if (targetSolutionsDiv.style.display === 'none' || targetSolutionsDiv.style.display === '') {
+                console.log('Показываем решения');
+                // Всегда загружаем свежие решения при открытии
+                await loadSolutionsInline(assignmentId, assignmentTitle);
+                targetSolutionsDiv.style.display = 'block';
+            } else {
+                console.log('Скрываем решения');
+                targetSolutionsDiv.style.display = 'none';
+            }
+        }
+
+        async function loadSolutionsInline(assignmentId, assignmentTitle) {
+            try {
+                console.log(`Загружаем решения для задания ${assignmentId}`);
+                
+                // Показываем индикатор загрузки
+                const targetSolutionsDiv = document.getElementById(`solutions_${assignmentId}`);
+                targetSolutionsDiv.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">⏳ Загрузка решений...</p>';
+                
+                // Создаем контроллер для отмены запроса по таймауту
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 секунд таймаут
+                
+                const response = await fetch(`/api/solutions/${assignmentId}`, {
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    if (response.status === 503) {
+                        throw new Error('Сервер временно недоступен. Попробуйте обновить страницу через несколько секунд.');
+                    }
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Получены решения:', data);
+                
+                let solutionsHtml = `<h4>Решения</h4>`;
+
+                if (!data.solutions || data.solutions.length === 0) {
+                    solutionsHtml += '<p style="color: #666;">Пока нет решений</p>';
+                } else {
+                    // Сначала показываем неоцененные решения
+                    const ungradedSolutions = data.solutions.filter(s => !s.teacher_grade);
+                    const gradedSolutions = data.solutions.filter(s => s.teacher_grade);
+
+                    console.log(`Найдено ${ungradedSolutions.length} неоцененных и ${gradedSolutions.length} оцененных решений`);
+
+                    [...ungradedSolutions, ...gradedSolutions].forEach(solution => {
+                        const isUngraded = !solution.teacher_grade;
+                        
+                        // Безопасная обработка результатов тестов
+                        let testResultsText = 'Не проверялись';
+                        if (solution.tests_passed !== undefined && solution.total_tests !== undefined) {
+                            testResultsText = `${solution.tests_passed || 0}/${solution.total_tests || 0} пройдено`;
+                        }
+                        
+                        // Безопасная обработка времени выполнения
+                        let performanceText = solution.performance ? `${solution.performance}мс` : 'Не измерена';
+                        
+                        solutionsHtml += `
+                            <div class="solution-item" style="margin: 1rem 0; padding: 1rem; border: 1px solid #ddd; border-radius: 4px;">
+                                <div class="solution-header">
+                                    <h5>Студент: ${solution.full_name || solution.username || 'Неизвестно'}</h5>
+                                    <small>Отправлено: ${solution.submitted_at ? new Date(solution.submitted_at).toLocaleString() : 'Неизвестно'}</small>
+                                </div>
+
+                                <div class="analysis-results" style="background: #f8f9fa; padding: 1rem; margin: 1rem 0; border-radius: 8px; border-left: 4px solid #3498db;">
+                                    <h6 style="margin: 0 0 0.5rem 0; color: #2c3e50; font-size: 1.1em;">📊 Результаты анализа:</h6>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 1.1em;">
+                                        <div><strong>${getStyleIcon(solution.style)} Стиль:</strong> ${translateStyleReport(solution.style) || 'Не анализировался'}</div>
+                                        <div><strong>${getErrorIcon(solution.errors)} Ошибки:</strong> ${translateErrorReport(solution.errors) || 'Не найдены'}</div>
+                                        <div><strong>⏳ Время:</strong> ${performanceText}</div>
+                                        <div><strong>${getTestIcon(solution.tests_passed, solution.total_tests)} Тесты:</strong> ${testResultsText}</div>
+                                        <div style="grid-column: 1 / -1;"><strong>🔍 Плагиат:</strong> ${solution.plagiarism || 'Не проверялся'}</div>
+                                    </div>
+                                </div>
+
+                                <div style="margin: 1rem 0;">
+                                    <button onclick="toggleCodeVisibility(${solution.id})" style="background: #3498db; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; margin-bottom: 0.5rem;">
+                                        <span id="code_toggle_${solution.id}">▼ Показать код</span>
+                                    </button>
+                                    <div id="code_${solution.id}" class="solution-code" style="display: none; background: #2c3e50; color: white; padding: 1rem; border-radius: 4px; font-family: monospace; white-space: pre-wrap; font-size: 0.9em;">${solution.code || 'Код не найден'}</div>
+                                </div>
+
+                                ${isUngraded ? `
+                                    <div class="grading-form" style="background: #e8f5e8; padding: 1rem; border-radius: 4px; margin-top: 1rem;">
+                                        <h6>Оценить решение:</h6>
+                                        <div style="display: flex; gap: 1rem; margin: 0.5rem 0;">
+                                            <input type="number" id="grade_${solution.id}" min="1" max="10" placeholder="Оценка (1-10)" required style="width: 150px; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                                            <button class="grade-btn" onclick="gradeSolution(${solution.id})" style="background: #27ae60; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">Выставить оценку</button>
+                                        </div>
+                                        <textarea id="comment_${solution.id}" placeholder="Комментарий..." rows="3" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; margin-top: 0.5rem;"></textarea>
+                                    </div>
+                                ` : `
+                                    <div style="background: #d4edda; padding: 1rem; border-radius: 4px; margin-top: 1rem; border-left: 4px solid #27ae60;">
+                                        <h6 style="margin: 0 0 0.5rem 0; color: #155724;">✅ Проверено учителем</h6>
+                                        <div style="display: grid; grid-template-columns: auto 1fr; gap: 0.5rem; font-size: 0.9em;">
+                                            <strong>🎯 Оценка:</strong> <span>${solution.teacher_grade || 'Не указана'}</span>
+                                            <strong>💬 Комментарий:</strong> <span>${solution.teacher_comment || 'Нет комментария'}</span>
+                                            <strong>📅 Проверено:</strong> <span>${solution.checked_at ? new Date(solution.checked_at).toLocaleString() : 'Неизвестно'}</span>
+                                        </div>
+                                    </div>
+                                `}
+                            </div>
+                        `;
+                    });
+                }
+
+                targetSolutionsDiv.innerHTML = solutionsHtml;
+                console.log('Решения успешно загружены и отображены');
+            } catch (error) {
+                console.error('Ошибка загрузки решений:', error);
+                const targetSolutionsDiv = document.getElementById(`solutions_${assignmentId}`);
+                if (targetSolutionsDiv) {
+                    let errorMessage = error.message;
+                    
+                    if (error.name === 'AbortError') {
+                        errorMessage = 'Превышено время ожидания. Попробуйте обновить страницу.';
+                    } else if (error.message.includes('503')) {
+                        errorMessage = 'Сервер временно недоступен. Попробуйте через несколько секунд.';
+                    }
+                    
+                    targetSolutionsDiv.innerHTML = `
+                        <div style="color: red; text-align: center; padding: 20px; border: 1px solid #ffcdd2; background: #ffebee; border-radius: 4px;">
+                            <p><strong>❌ Ошибка загрузки решений</strong></p>
+                            <p>${errorMessage}</p>
+                            <button onclick="loadSolutionsInline(${assignmentId}, '${assignmentTitle}')" 
+                                    style="margin-top: 10px; padding: 8px 16px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                🔄 Попробовать снова
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        function scrollToAssignmentInList(assignmentId) {
+            const assignmentCard = document.getElementById(`assignment_card_${assignmentId}`);
+            if (assignmentCard) {
+                assignmentCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Подсвечиваем задание
+                assignmentCard.style.backgroundColor = '#fff3cd';
+                setTimeout(() => {
+                    assignmentCard.style.backgroundColor = '';
+                }, 2000);
+            }
+        }
+
+        function toggleCodeVisibility(solutionId) {
+            const codeDiv = document.getElementById(`code_${solutionId}`);
+            const toggleSpan = document.getElementById(`code_toggle_${solutionId}`);
+            
+            if (codeDiv.style.display === 'none') {
+                codeDiv.style.display = 'block';
+                toggleSpan.textContent = '▲ Скрыть код';
+            } else {
+                codeDiv.style.display = 'none';
+                toggleSpan.textContent = '▼ Показать код';
+            }
+        }
+
+        async function gradeSolution(solutionId) {
+            const grade = document.getElementById(`grade_${solutionId}`).value;
+            const comment = document.getElementById(`comment_${solutionId}`).value;
+
+            if (!grade) {
+                alert('Введите оценку');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/evaluate-solution', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        solution_id: parseInt(solutionId),
+                        grade: parseInt(grade),
+                        comment: comment
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Оценка выставлена!');
+                    displayGroupContent(); // Обновляем таблицу
+                } else {
+                    alert('Ошибка при выставлении оценки');
+                }
+            } catch (error) {
+                alert('Ошибка при выставлении оценки');
+            }
+        }
+
+        async function approveStudent(requestId) {
+            try {
+                const response = await fetch(`/api/group-requests/${requestId}/approve`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    alert('Заявка одобрена! Студент добавлен в группу.');
+                    loadGroupData(currentGroupId);
+                } else {
+                    alert('Ошибка при одобрении заявки');
+                }
+            } catch (error) {
+                alert('Ошибка при одобрении заявки');
+            }
+        }
+
+        async function rejectStudent(requestId) {
+            try {
+                const response = await fetch(`/api/group-requests/${requestId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('Заявка отклонена');
+                    loadGroupData(currentGroupId);
+                } else {
+                    alert('Ошибка при отклонении заявки');
+                }
+            } catch (error) {
+                alert('Ошибка при отклонении заявки');
+            }
+        }
+
+        function openCreateAssignmentModal() {
+            document.getElementById('assignmentModal').style.display = 'block';
+        }
+
+        function closeCreateAssignmentModal() {
+            document.getElementById('assignmentModal').style.display = 'none';
+            document.getElementById('assignmentForm').reset();
+            document.getElementById('assignmentForm').dataset.editingId = '';
+        }
+
+        function openCreateGroupModal() {
+            console.log('Открываем модальное окно создания группы');
+            const modal = document.getElementById('groupModal');
+            if (modal) {
+                modal.style.display = 'block';
+            } else {
+                console.error('Модальное окно groupModal не найдено');
+            }
+        }
+
+        function closeCreateGroupModal() {
+            console.log('Закрываем модальное окно создания группы');
+            const modal = document.getElementById('groupModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            const form = document.getElementById('groupForm');
+            if (form) {
+                form.reset();
+            }
+        }
+
+        async function createAssignment(event) {
+            event.preventDefault();
+
+            const title = document.getElementById('assignmentTitle').value;
+            const description = document.getElementById('assignmentDescription').value;
+            const tests = document.getElementById('assignmentTests').value;
+            const deadline = document.getElementById('assignmentDeadline').value;
+            const editingId = document.getElementById('assignmentForm').dataset.editingId;
+
+            try {
+                let response;
+                if (editingId) {
+                    // Редактирование
+                    response = await fetch(`/api/assignments/${editingId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            title,
+                            description,
+                            tests: tests || null,
+                            deadline: deadline || null,
+                            group_id: currentGroupId
+                        })
+                    });
+                } else {
+                    // Создание
+                    response = await fetch('/api/assignments', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            title,
+                            description,
+                            tests: tests || null,
+                            deadline: deadline || null,
+                            group_id: currentGroupId
+                        })
+                    });
+                }
+
+                if (response.ok) {
+                    alert(editingId ? 'Задание обновлено!' : 'Задание создано!');
+                    closeCreateAssignmentModal();
+                    loadGroupData(currentGroupId);
+                } else {
+                    alert('Ошибка при сохранении задания');
+                }
+            } catch (error) {
+                alert('Ошибка при сохранении задания');
+            }
+        }
+
+        async function createGroup(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('groupName').value;
+            const description = document.getElementById('groupDescription').value;
+
+            try {
+                const response = await fetch('/api/groups', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name,
+                        description: description || null
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Группа создана!');
+                    closeCreateGroupModal();
+                    loadGroups();
+                } else {
+                    alert('Ошибка создания группы');
+                }
+            } catch (error) {
+                alert('Ошибка создания группы');
+            }
+        }
+
+        function toggleAssignmentDetails(assignmentId) {
+            const details = document.getElementById(`details_${assignmentId}`);
+            const expandBtn = document.getElementById(`expand_${assignmentId}`);
+            
+            if (details.style.display === 'none') {
+                details.style.display = 'block';
+                expandBtn.textContent = '▲';
+            } else {
+                details.style.display = 'none';
+                expandBtn.textContent = '▼';
+            }
+        }
+
+        async function deleteCurrentGroup() {
+            if (!currentGroupId) return;
+            
+            const groupName = document.getElementById("selectedGroupName").textContent;
+            if (!confirm(`Вы уверены, что хотите удалить группу "${groupName}"? Это также удалит все задания и решения группы!`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/groups/${currentGroupId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('Группа удалена успешно');
+                    await loadGroups();
+                    currentGroupId = null;
+                    document.getElementById('selectedGroupName').textContent = 'Выберите группу';
+                    document.getElementById('editGroupBtn').style.display = 'none';
+                    document.getElementById('contentMain').innerHTML = '<div class="empty-state">Выберите группу из списка слева для просмотра учеников и управления заданиями</div>';
+                } else {
+                    const error = await response.json();
+                    alert('Ошибка: ' + error.detail);
+                }
+            } catch (error) {
+                alert('Ошибка при удалении группы');
+            }
+        }
+
+        function openEditGroupModal() {
+            // Заполняем текущие данные группы
+            const groupName = document.getElementById("selectedGroupName").textContent;
+            document.getElementById('groupName').value = groupName;
+            document.getElementById('groupDescription').value = '';
+            document.getElementById('groupModal').style.display = 'block';
+        }
+
+        async function editAssignment(assignmentId) {
+            // Находим задание в массиве
+            const assignment = groupAssignments[currentGroupId].find(a => a.id === assignmentId);
+            if (!assignment) return;
+
+            // Заполняем форму текущими данными
+            document.getElementById('assignmentTitle').value = assignment.title;
+            document.getElementById('assignmentDescription').value = assignment.description || '';
+            document.getElementById('assignmentTests').value = assignment.tests || '';
+            
+            // Заполняем дедлайн если есть
+            if (assignment.deadline) {
+                const deadline = new Date(assignment.deadline);
+                deadline.setMinutes(deadline.getMinutes() - deadline.getTimezoneOffset());
+                document.getElementById('assignmentDeadline').value = deadline.toISOString().slice(0, 16);
+            } else {
+                document.getElementById('assignmentDeadline').value = '';
+            }
+            
+            // Сохраняем ID для редактирования
+            document.getElementById('assignmentForm').dataset.editingId = assignmentId;
+            document.getElementById('assignmentModal').style.display = 'block';
+        }
+
+        async function deleteAssignment(assignmentId) {
+            if (!confirm('Вы уверены, что хотите удалить это задание?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/assignments/${assignmentId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('Задание удалено успешно');
+                    await loadGroupData(currentGroupId);
+                } else {
+                    const error = await response.json();
+                    alert('Ошибка: ' + error.detail);
+                }
+            } catch (error) {
+                alert('Ошибка при удалении задания');
+            }
+        }
+
+        async function removeMemberFromGroup(userId, username) {
+            if (!confirm(`Вы уверены, что хотите удалить ${username} из группы?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/groups/${currentGroupId}/members/${userId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert(`${username} удален из группы`);
+                    await loadGroupData(currentGroupId);
+                } else {
+                    const error = await response.json();
+                    alert('Ошибка: ' + error.detail);
+                }
+            } catch (error) {
+                alert('Ошибка при удалении студента из группы');
+            }
+        }
+
+        // Функции для работы с профилем
+        function togglePasswordChange() {
+            const passwordFields = document.getElementById('passwordFields');
+            const btn = document.getElementById('changePasswordBtn');
+            
+            if (passwordFields.style.display === 'none') {
+                passwordFields.style.display = 'block';
+                btn.textContent = '✕ Отменить смену пароля';
+                btn.style.background = '#e74c3c';
+            } else {
+                passwordFields.style.display = 'none';
+                btn.textContent = '🔑 Сменить пароль';
+                btn.style.background = '#f39c12';
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+            }
+        }
+
+        function openProfileModal() {
+            fetch("/api/current-user")
+                .then(response => response.json())
+                .then(user => {
+                    document.getElementById('firstName').value = user.first_name;
+                    document.getElementById('lastName').value = user.last_name;
+                    document.getElementById('currentPassword').value = '';
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('profileMessage').textContent = '';
+                    document.getElementById('passwordFields').style.display = 'none';
+                    document.getElementById('changePasswordBtn').textContent = 'Сменить пароль';
+                    document.getElementById('changePasswordBtn').style.background = '#3498db';
+                    document.getElementById('profileModal').style.display = 'block';
+                });
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').style.display = 'none';
+        }
+
+        async function updateProfile(event) {
+            event.preventDefault();
+            
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const passwordFieldsVisible = document.getElementById('passwordFields').style.display !== 'none';
+            const currentPassword = passwordFieldsVisible ? document.getElementById('currentPassword').value : 'dummy';
+            const newPassword = passwordFieldsVisible ? document.getElementById('newPassword').value : null;
+            const messageDiv = document.getElementById('profileMessage');
+
+            if (passwordFieldsVisible && !currentPassword) {
+                messageDiv.textContent = 'Введите текущий пароль';
+                messageDiv.style.color = '#e74c3c';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/update-profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        first_name: firstName,
+                        last_name: lastName,
+                        current_password: currentPassword,
+                        new_password: newPassword
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    messageDiv.textContent = data.message;
+                    messageDiv.style.color = '#27ae60';
+                    // Обновляем отображение имени
+                    document.getElementById("username").textContent = `${lastName} ${firstName}`;
+                    setTimeout(() => {
+                        closeProfileModal();
+                    }, 1500);
+                } else {
+                    messageDiv.textContent = data.detail;
+                    messageDiv.style.color = '#e74c3c';
+                }
+            } catch (error) {
+                messageDiv.textContent = 'Ошибка при обновлении профиля';
+                messageDiv.style.color = '#e74c3c';
+            }
+        }
+
+        // Инициализация - выполняется только один раз
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else {
+            initializeApp();
+        }
+
+        function initializeApp() {
+            console.log('DOM загружен, начинаем инициализацию...');
+            
+            try {
+                checkAuth();
+                loadGroups();
+                
+                // Добавляем обработчики событий с проверкой существования элементов
+                const assignmentForm = document.getElementById('assignmentForm');
+                if (assignmentForm) {
+                    assignmentForm.addEventListener('submit', createAssignment);
+                }
+                
+                const groupForm = document.getElementById('groupForm');
+                if (groupForm) {
+                    groupForm.addEventListener('submit', createGroup);
+                }
+                
+                const profileForm = document.getElementById('profileForm');
+                if (profileForm) {
+                    profileForm.addEventListener('submit', updateProfile);
+                }
+                
+                console.log('Инициализация завершена успешно');
+            } catch (error) {
+                console.error('Ошибка при инициализации:', error);
+                alert('Ошибка загрузки страницы. Попробуйте обновить страницу.');
+            }
+        }
+
+        // Закрытие модального окна при клике вне его
+        window.onclick = function(event) {
+            const assignmentModal = document.getElementById('assignmentModal');
+            const groupModal = document.getElementById('groupModal');
+            const profileModal = document.getElementById('profileModal');
+
+            if (event.target === assignmentModal) {
+                closeCreateAssignmentModal();
+            }
+            if (event.target === groupModal) {
+                closeCreateGroupModal();
+            }
+            if (event.target === profileModal) {
+                closeProfileModal();
+            }
+        }
+    </script>
+</body>
+</html>

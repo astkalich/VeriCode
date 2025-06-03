@@ -1,0 +1,447 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VeriCode — Административная панель</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        main {
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        textarea, input, select {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            margin-top: 0.5rem;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 0.5rem 1rem;
+            font-size: 16px;
+            background-color: #8e44ad;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 1rem;
+            margin-right: 1rem;
+        }
+        button:hover {
+            background-color: #9b59b6;
+        }
+        .logout-btn {
+            background-color: #e74c3c;
+        }
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .users-table th, .users-table td {
+            border: 1px solid #ddd;
+            padding: 0.5rem;
+            text-align: left;
+        }
+        .users-table th {
+            background-color: #f8f9fa;
+        }
+        .delete-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 0.3rem 0.6rem;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
+        .approve-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 0.3rem 0.6rem;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-right: 0.5rem;
+        }
+        .approve-btn:hover {
+            background-color: #2ecc71;
+        }
+        .reject-btn {
+            background-color: #f39c12;
+            color: white;
+            border: none;
+            padding: 0.3rem 0.6rem;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .reject-btn:hover {
+            background-color: #e67e22;
+        }
+        .current-code {
+            background-color: #e8f5e8;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+            font-family: monospace;
+            font-size: 1.2em;
+            text-align: center;
+        }
+        .success {
+            color: #27ae60;
+            margin-top: 0.5rem;
+        }
+        .error {
+            color: #e74c3c;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>VeriCode — Административная панель</h1>
+        <div class="user-info">
+            <span id="username"></span>
+            <span id="userRole" style="margin-left: 0.5rem; color: #ecf0f1; font-size: 0.9em;"></span>
+            <button class="logout-btn" onclick="logout()">Выход</button>
+        </div>
+    </header>
+    <main>
+        <div class="container">
+            <h2>Управление кодом учителя</h2>
+            <p>Текущий код для регистрации учителей:</p>
+            <div id="currentCode" class="current-code">Загрузка...</div>
+            
+            <form id="codeForm">
+                <label for="newCode">Новый код:</label>
+                <input type="text" id="newCode" name="newCode" required placeholder="Введите новый код">
+                <button type="submit">Обновить код</button>
+                <div id="codeMessage"></div>
+            </form>
+        </div>
+
+        <div class="container">
+            <h2>Заявки учителей на регистрацию</h2>
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Имя и фамилия</th>
+                        <th>Имя пользователя</th>
+                        <th>Дата регистрации</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="pendingTeachersTable">
+                    <tr>
+                        <td colspan="4">Загрузка...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="container">
+            <h2>Пользователи системы</h2>
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Имя и фамилия</th>
+                        <th>Имя пользователя</th>
+                        <th>Роль</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTable">
+                    <tr>
+                        <td colspan="4">Загрузка...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        let currentUser = null;
+
+        // Проверка авторизации
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/current-user');
+                if (response.ok) {
+                    currentUser = await response.json();
+                    document.getElementById('username').textContent = `${currentUser.last_name} ${currentUser.first_name}`;
+                    document.getElementById('userRole').textContent = '(Администратор)';
+                    
+                    if (currentUser.role !== 'admin') {
+                        window.location.href = '/dashboard';
+                        return;
+                    }
+                } else {
+                    window.location.href = '/login';
+                    return;
+                }
+            } catch (error) {
+                console.error('Ошибка проверки авторизации:', error);
+                window.location.href = '/login';
+                return;
+            }
+        }
+
+        // Код регистрации
+        async function loadTeacherCode() {
+            try {
+                const response = await fetch('/api/teacher-code');
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('currentCode').textContent = data.teacher_code;
+                } else {
+                    document.getElementById('currentCode').textContent = 'Ошибка загрузки';
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки кода:', error);
+                document.getElementById('currentCode').textContent = 'Ошибка загрузки';
+            }
+        }
+
+        // Загрузка пользователей
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/all-users');
+                if (response.ok) {
+                    const data = await response.json();
+                    const tbody = document.getElementById('usersTable');
+                    tbody.innerHTML = '';
+                    
+                    if (data.users.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="4">Нет пользователей</td></tr>';
+                        return;
+                    }
+                    
+                    data.users.forEach(user => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${user.id}</td>
+                            <td>${user.full_name}</td>
+                            <td>${user.username}</td>
+                            <td>${user.role === 'teacher' ? 'Учитель' : 'Студент'}</td>
+                            <td>
+                                <button class="delete-btn" onclick="deleteUser(${user.id}, '${user.full_name}')">
+                                    Удалить
+                                </button>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                } else {
+                    document.getElementById('usersTable').innerHTML = '<tr><td colspan="4">Ошибка загрузки</td></tr>';
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки пользователей:', error);
+                document.getElementById('usersTable').innerHTML = '<tr><td colspan="4">Ошибка загрузки</td></tr>';
+            }
+        }
+
+        // Удаление пользователя
+        async function deleteUser(userId, fullName) {
+            if (!confirm(`Вы уверены, что хотите удалить пользователя "${fullName}"? Это действие удалит все его решения и не может быть отменено.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/users/${userId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('Пользователь успешно удален!');
+                    loadUsers();
+                } else {
+                    const data = await response.json();
+                    alert(data.detail || 'Ошибка при удалении пользователя');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка соединения');
+            }
+        }
+
+        // Обновлениу кода
+        document.getElementById('codeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const messageDiv = document.getElementById('codeMessage');
+            
+            try {
+                const response = await fetch('/api/teacher-code', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    messageDiv.textContent = 'Код успешно обновлен!';
+                    messageDiv.className = 'success';
+                    loadTeacherCode(); 
+                    document.getElementById('newCode').value = '';
+                } else {
+                    const data = await response.json();
+                    messageDiv.textContent = data.detail || 'Ошибка обновления кода';
+                    messageDiv.className = 'error';
+                }
+            } catch (error) {
+                messageDiv.textContent = 'Ошибка соединения';
+                messageDiv.className = 'error';
+            }
+        });
+
+        // Выход
+        async function logout() {
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+            } catch (error) {
+                console.error('Ошибка выхода:', error);
+            }
+            window.location.href = '/login';
+        }
+
+        // Загрузка заявок учителей
+        async function loadPendingTeachers() {
+            try {
+                const response = await fetch('/api/pending-teachers');
+                if (response.ok) {
+                    const data = await response.json();
+                    const tbody = document.getElementById('pendingTeachersTable');
+                    tbody.innerHTML = '';
+                    
+                    if (data.teachers.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="4">Нет заявок</td></tr>';
+                        return;
+                    }
+                    
+                    data.teachers.forEach(teacher => {
+                        const row = document.createElement('tr');
+                        const date = new Date(teacher.created_at).toLocaleDateString('ru-RU');
+                        row.innerHTML = `
+                            <td>${teacher.id}</td>
+                            <td>${teacher.full_name}</td>
+                            <td>${teacher.username}</td>
+                            <td>${date}</td>
+                            <td>
+                                <button class="approve-btn" onclick="approveTeacher(${teacher.id}, '${teacher.full_name}')">
+                                    Одобрить
+                                </button>
+                                <button class="reject-btn" onclick="rejectTeacher(${teacher.id}, '${teacher.full_name}')">
+                                    Отклонить
+                                </button>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                } else {
+                    document.getElementById('pendingTeachersTable').innerHTML = '<tr><td colspan="4">Ошибка загрузки</td></tr>';
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки заявок:', error);
+                document.getElementById('pendingTeachersTable').innerHTML = '<tr><td colspan="4">Ошибка загрузки</td></tr>';
+            }
+        }
+
+        // Одобрение заявки учителя
+        async function approveTeacher(teacherId, fullName) {
+            if (!confirm(`Одобрить регистрацию учителя "${fullName}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/approve-teacher/${teacherId}`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    alert('Учитель успешно одобрен!');
+                    loadPendingTeachers();
+                    loadUsers();
+                } else {
+                    const data = await response.json();
+                    alert(data.detail || 'Ошибка при одобрении');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка соединения');
+            }
+        }
+
+        // Отклонение заявки учителя
+        async function rejectTeacher(teacherId, fullName) {
+            if (!confirm(`Отклонить регистрацию учителя "${fullName}"? Аккаунт будет удален.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/reject-teacher/${teacherId}`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    alert('Регистрация отклонена!');
+                    loadPendingTeachers();
+                } else {
+                    const data = await response.json();
+                    alert(data.detail || 'Ошибка при отклонении');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка соединения');
+            }
+        }
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth().then(() => {
+                loadTeacherCode();
+                loadUsers();
+                loadPendingTeachers();
+            });
+        });
+    </script>
+</body>
+</html>

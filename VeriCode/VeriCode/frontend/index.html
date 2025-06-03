@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VeriCode — Система проверки кода</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+        header { background-color: #ecf0f1; color: #2c3e50; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        .user-info { display: flex; align-items: center; gap: 1rem; }
+        main { padding: 2rem; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        textarea, input, select { width: 100%; padding: 10px; font-family: monospace; font-size: 16px; border-radius: 4px; border: 1px solid #ccc; margin-top: 0.5rem; box-sizing: border-box; }
+        button { padding: 0.5rem 1rem; font-size: 16px; background-color: #2980b9; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 1rem; }
+        button:hover { background-color: #3498db; }
+        .output { margin-top: 1rem; background: #ecf0f1; padding: 1rem; border-radius: 4px; white-space: pre-wrap; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>VeriCode — Простая отправка</h1>
+        <div class="user-info">
+            <span id="username"></span>
+            <button onclick="logout()">Выход</button>
+        </div>
+    </header>
+    <main>
+        <div class="container">
+            <h2>Отправка решения</h2>
+            <label for="assignmentSelect">Выберите задание:</label>
+            <select id="assignmentSelect"></select>
+            <label for="codeInput">Введите ваш код:</label>
+            <textarea id="codeInput" placeholder="Введите код на Python..." rows="10"></textarea>
+            <button onclick="submitCode()">Отправить на проверку</button>
+            <div id="output" class="output"></div>
+        </div>
+    </main>
+    <script>
+        async function checkAuth() {
+            try {
+                const response = await fetch("/api/current-user");
+                if (response.ok) {
+                    const user = await response.json();
+                    document.getElementById("username").textContent = user.username;
+                    if (user.role !== "student") {
+                        window.location.href = "/dashboard";
+                    }
+                } else {
+                    window.location.href = "/login";
+                }
+            } catch (error) {
+                window.location.href = "/login";
+            }
+        }
+
+        async function logout() {
+            try {
+                await fetch("/api/logout", { method: "POST" });
+                window.location.href = "/login";
+            } catch (error) {
+                window.location.href = "/login";
+            }
+        }
+
+        async function loadAssignments() {
+            try {
+                const response = await fetch("/api/assignments");
+                if (response.ok) {
+                    const data = await response.json();
+                    const select = document.getElementById("assignmentSelect");
+                    select.innerHTML = '<option value="">Выберите задание</option>';
+                    data.assignments.forEach(a => {
+                        const option = document.createElement("option");
+                        option.value = a.id;
+                        option.textContent = a.title;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                document.getElementById("output").innerText = 'Ошибка загрузки заданий';
+            }
+        }
+
+        async function submitCode() {
+            try {
+                const code = document.getElementById("codeInput").value;
+                const assignmentId = document.getElementById("assignmentSelect").value;
+
+                if (!code.trim()) {
+                    document.getElementById("output").innerText = 'Введите код для проверки!';
+                    return;
+                }
+
+                if (!assignmentId) {
+                    document.getElementById("output").innerText = 'Выберите задание!';
+                    return;
+                }
+
+                const response = await fetch("/api/submit", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ code, assignment_id: parseInt(assignmentId) })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    document.getElementById("output").innerText =
+                        `Результат:\n- Стиль: ${result.style}\n- Ошибки: ${result.errors}\n- Время: ${result.performance}мс\n- Тесты: ${result.tests_passed}/${result.total_tests}\n- Плагиат: ${result.plagiarism}`;
+                } else {
+                    throw new Error('Ошибка отправки');
+                }
+            } catch (error) {
+                document.getElementById("output").innerText = 'Ошибка отправки кода';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            loadAssignments();
+        });
+    </script>
+</body>
+</html>

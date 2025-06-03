@@ -1,0 +1,172 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VeriCode — Регистрация</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .register-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 2rem;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        input[type="text"], input[type="password"], select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+        button:hover {
+            background-color: #2ecc71;
+        }
+        .error, .success {
+            margin-top: 0.5rem;
+            display: none;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+        .link {
+            text-align: center;
+            margin-top: 1rem;
+        }
+        .link a {
+            color: #2980b9;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <h1>Регистрация в VeriCode</h1>
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="first_name">Имя:</label>
+                <input type="text" id="first_name" name="first_name" required>
+            </div>
+            <div class="form-group">
+                <label for="last_name">Фамилия:</label>
+                <input type="text" id="last_name" name="last_name" required>
+            </div>
+            <div class="form-group">
+                <label for="username">Имя пользователя:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Пароль:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="role">Роль:</label>
+                <select id="role" name="role" required onchange="toggleTeacherCode()">
+                    <option value="student">Студент</option>
+                    <option value="teacher">Учитель</option>
+                </select>
+            </div>
+            <div class="form-group" id="teacherCodeGroup" style="display: none;">
+                <label for="teacherCode">Проверочный код учителя:</label>
+                <input type="text" id="teacherCode" name="teacherCode" placeholder="Введите код, выданный школой">
+                <small style="color: #666; font-size: 0.9em;">Код выдается администрацией школы</small>
+            </div>
+            <button type="submit">Зарегистрироваться</button>
+            <div id="error" class="error"></div>
+            <div id="success" class="success"></div>
+        </form>
+        <div class="link">
+            <p>Уже есть аккаунт? <a href="/login">Войти</a></p>
+        </div>
+    </div>
+
+    <script>
+        function toggleTeacherCode() {
+            const role = document.getElementById('role').value;
+            const teacherCodeGroup = document.getElementById('teacherCodeGroup');
+            const teacherCodeInput = document.getElementById('teacherCode');
+            
+            if (role === 'teacher') {
+                teacherCodeGroup.style.display = 'block';
+                teacherCodeInput.required = true;
+            } else {
+                teacherCodeGroup.style.display = 'none';
+                teacherCodeInput.required = false;
+                teacherCodeInput.value = '';
+            }
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const errorDiv = document.getElementById('error');
+            const successDiv = document.getElementById('success');
+            
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    successDiv.textContent = data.message || 'Регистрация успешна! Теперь вы можете войти.';
+                    successDiv.style.display = 'block';
+                    errorDiv.style.display = 'none';
+                    document.getElementById('registerForm').reset();
+                } else {
+                    const data = await response.json();
+                    errorDiv.textContent = data.detail || 'Ошибка регистрации';
+                    errorDiv.style.display = 'block';
+                    successDiv.style.display = 'none';
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Ошибка соединения';
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
